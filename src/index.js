@@ -1,12 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 
+import canonize from './canonize'
+
 const app = express();
 app.use(cors());
-app.get('/', (req, res) => {
-  res.json({
-    hello: 'JS World',
-  });
+
+app.get('/canonize', (req, res) => {
+  const str = req.query.username;
+  console.log(str);
+  const userName = canonize(str) || 'Invalid name';
+  res.send(userName);
 });
 
 app.listen(3000, () => {
