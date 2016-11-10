@@ -30,8 +30,11 @@
   "dependencies": {
     "babel-cli": "^6.18.0",
     "babel-runtime": "^6.11.6",
+    "body-parser": "^1.15.2",
     "cors": "^2.8.1",
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "lodash": "^4.16.6",
+    "mongoose": "^4.6.6"
   },
   "devDependencies": {
     "babel-cli": "^6.16.0",
