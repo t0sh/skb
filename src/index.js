@@ -24,49 +24,18 @@ app.get('/pets', async (req, res) => {
   return res.json(pets);
 });
 
-app.post('/data', (req, res) => {
+app.post('/data', async (req, res) => {
   const data = req.body;
-  console.log(data);
-  return res.json({
-    data,
-  });
-
-  // const data = {
-  //   user: {
-  //     name: 't0sh',
-  //   },
-  //   pets: [
-  //     {
-  //       name: 'Zildjian',
-  //       type: 'cat',
-  //     },
-  //     {
-  //       name: 'Doge',
-  //       type: 'dog',
-  //     },
-  //   ],
-  // };
-  // saveDataInDb(data);
+  if (!data.user) return res.status(400).send('user required');
+  if (!data.pets) data.pets = [];
+  try {
+    const result = await saveDataInDb(data);
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json(err);
+  }
 });
 
 app.listen(3000, () => {
   console.log('Your app listening on port 3000!');
 });
-
-// const Pet = mongoose.model('Pet', {
-//   type: String,
-//   name: String
-// });
-//
-// const kitty = new Pet({
-//   type: 'cat',
-//   name: 'Zildjian'
-// });
-//
-// kitty.save()
-//   .then(() => {
-//     console.log('success');
-//   })
-//   .catch((err) => {
-//     console.log('err', err);
-//   });

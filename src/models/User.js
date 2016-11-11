@@ -1,15 +1,18 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 import _ from 'lodash';
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
-  name: String,
+  name: {
+    type: String,
+    required: true,
+  },
 }, {
   timestamps: true,
 });
 
-userSchema.methods.toJSON = function() {
-  return _.pick(this, ['name'])
-}
+userSchema.methods.toJSON = function () {
+  return _.pick(this, ['name']);
+};
 
-export default mongoose.model('User', userSchema)
+export default mongoose.model('User', userSchema);
