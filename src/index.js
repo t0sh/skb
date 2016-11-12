@@ -1,52 +1,58 @@
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
+
 import Promise from 'bluebird';
 import bodyParser from 'body-parser';
-import saveDataInDb from './saveDataInDb';
-import Pet from './models/Pet';
-import User from './models/User';
-import isAdmin from './middlewares/isAdmin';
-
-mongoose.Promise = Promise;
-mongoose.connect('mongodb://publicdb.mgbeta.ru/t0sh_skb3');
+import fetch from 'isomorphic-fetch';
+import _ from 'lodash';
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-// app.use(isAdmin);
 
-app.get('/clear', isAdmin, async (req, res) => {
-  await User.remove({});
-  await Pet.remove({});
-  return res.send('OK');
-});
-
-app.get('/users', async (req, res) => {
-  const users = await User.find();
-  return res.json(users);
-});
-
-app.get('/pets', async (req, res) => {
-  const pets = await Pet.find().populate('owner');
-  return res.json(pets);
-});
-
-app.post('/data', async (req, res) => {
-  const data = req.body;
-  if (!data.user) return res.status(400).send('user required');
-  if (!data.pets) data.pets = [];
-
-  const user = await User.findOne({
-    name: data.user.name,
-  });
-  if (user) return res.status(400).send('such user.name is exist');
+async function getPC(pcUrl) {
   try {
-    const result = await saveDataInDb(data);
-    return res.json(result);
+    const response = await fetch(pcUrl);
+    const pc = await response.json();
+    return pc;
   } catch (err) {
-    return res.status(500).json(err);
+    console.log('Чтото пошло не так:', err);
+    return response.json({ err });
   }
+}
+
+const pcUrl =
+  'https://gist.githubusercontent.com/isuvorov/ce6b8d87983611482aac89f6d7bc0037/raw/pc.json';
+
+app.get('/task3A/volumes', async (req, res) => {
+  let result = await getPC(pcUrl);
+  const outputArray = _(result.hdd)
+    .groupBy('volume')
+    .map((size, volume) => ({
+      // [volume]: _.sumBy(size, 'size'), // todo
+      volume,
+      size: _.sumBy(size, 'size').toString() + "B",
+    }))
+    .value();
+
+  const obj = _.fromPairs(_.map(outputArray, i => [i.volume, i.size]));
+  console.log(obj);
+  res.json(obj);
+});
+
+app.get('/task3A/:field1?/:field2?/:field3?', async (req, res) => {
+  let result = await getPC(pcUrl);
+  console.log(req.originalUrl);
+  let i = 0;
+  _(req.params)
+    .forEach((field) => {
+      if (field && result) {
+        result = result[`${field}`];
+      }
+  });
+  (result !== '' && result !== undefined) ?
+    res.json(result) :
+    res.status(404).send('Not found');
 });
 
 app.listen(3000, () => {
