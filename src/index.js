@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 
-import Promise from 'bluebird';
 import bodyParser from 'body-parser';
 import fetch from 'isomorphic-fetch';
 import _ from 'lodash';
@@ -31,7 +30,7 @@ app.get('/task3A/volumes', async (req, res) => {
     .map((size, volume) => ({
       // [volume]: _.sumBy(size, 'size'), // todo
       volume,
-      size: _.sumBy(size, 'size').toString() + "B",
+      size: _.sumBy(size, 'size').toString() + 'B',
     }))
     .value();
 
@@ -42,17 +41,18 @@ app.get('/task3A/volumes', async (req, res) => {
 
 app.get('/task3A/:field1?/:field2?/:field3?', async (req, res) => {
   let result = await getPC(pcUrl);
-  console.log(req.originalUrl);
-  let i = 0;
   _(req.params)
     .forEach((field) => {
-      if (field && result) {
-        result = result[`${field}`];
-      }
-  });
-  (result !== '' && result !== undefined) ?
+      if (field && result)
+
+        // ловим прототипные свойства, спасибо Roman Barlos
+        result = (result.constructor()[field] === undefined) ?
+          result[field] :
+          undefined;
+    });
+  (result !== undefined) ?
     res.json(result) :
-    res.status(404).send('Not found');
+    res.status(404).send('Not Found');
 });
 
 app.listen(3000, () => {
