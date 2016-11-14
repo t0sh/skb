@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-
 import bodyParser from 'body-parser';
 import fetch from 'isomorphic-fetch';
 import _ from 'lodash';
@@ -25,18 +24,12 @@ const pcUrl =
 
 app.get('/task3A/volumes', async (req, res) => {
   let result = await getPC(pcUrl);
-  const outputArray = _(result.hdd)
+  const volumeSumSizePairs = _(result.hdd)
     .groupBy('volume')
-    .map((size, volume) => ({
-      // [volume]: _.sumBy(size, 'size'), // todo
-      volume,
-      size: _.sumBy(size, 'size').toString() + 'B',
-    }))
+    .map((size, volume) => [volume, _.sumBy(size, 'size') + 'B'])
     .value();
-
-  const obj = _.fromPairs(_.map(outputArray, i => [i.volume, i.size]));
-  console.log(obj);
-  res.json(obj);
+  const outputObj = _.fromPairs(volumeSumSizePairs);
+  res.json(outputObj);
 });
 
 app.get('/task3A/:field1?/:field2?/:field3?', async (req, res) => {
