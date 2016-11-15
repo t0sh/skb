@@ -1,4 +1,5 @@
 import express from 'express';
+
 //import cors from 'cors';
 import fetch from 'isomorphic-fetch';
 import Promise from 'bluebird';
@@ -7,6 +8,7 @@ import _ from 'lodash';
 const _DEV_ = true;
 
 const app = express();
+
 //app.use(cors());
 
 const baseUrl = 'https://pokeapi.co/api/v2';
@@ -20,13 +22,15 @@ async function getPokemons(url, i = 0) {
   if (_DEV_ && i > 1) {
     return pokemons;
   }
+
   if (page.next) {
     const pokemons2 = await getPokemons(page.next, i + 1);
     return [
       ...pokemons,
-      ...pokemons2
-    ]
+      ...pokemons2,
+    ];
   }
+
   return pokemons;
 }
 
@@ -37,29 +41,25 @@ async function getPokemon(url) {
   return pokemon;
 }
 
-
 app.get('/', async (req, res) => {
-  try{
+  try {
+    const pokemonsUrl = `${baseUrl}/pokemon`;
 
-    const pokemonsUrl = ${baseUrl}/pokemon;
-//    const pokemonsUrl = https://pokeapi.co/api/v2/pokemon;
+    // const pokemonsUrl = https://pokeapi.co/api/v2/pokemon;
 
     const pokemonsInfo = await getPokemons(pokemonsUrl);
-    const pokemonsPromises = pokemonsInfo.slice(0, 2).map( info =>{
-      return getPokemon(info.url);
-    });
+    const pokemonsPromises = pokemonsInfo.slice(0, 39).map(info =>
+      getPokemon(info.url));
 
     const pokemonsFull = await Promise.all(pokemonsPromises);
-    const pokemons = pokemonsFull.map(pokemon => {
-      return _.pick(pokemon, pokemonFields);
-    })
+    const pokemons = pokemonsFull.map(pokemon =>
+      _.pick(pokemon, pokemonFields));
+    const sortPokemons = _.sortBy(pokemons, pokemon => -pokemon.weight);
 
-    return  res.json({
-      pokemons,
-    });
-  } catch(err) {
+    return res.json(sortPokemons);
+  } catch (err) {
     console.log(err);
-    return  res.json({ err });
+    return res.json({ err });
   }
 });
 
