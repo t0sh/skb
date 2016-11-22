@@ -13,8 +13,7 @@ app.get('/', (req, res) => {
 app.set('query parser', 'simple'); // utf-8 encoding
 
 app.get('/task2D', (req, res) => {
-  console.log(req.query.color);
-  const color = (req.query.color || '').toLowerCase().replace(/\s/g, '').replace(/%[0-9]{2}/g, '');
+  const color = (req.query.color || '').toLowerCase().replace(/\s|%[0-9]{2}/g, '');
   const response = getColor(color);
   res.send(response);
 });
