@@ -14,6 +14,7 @@ mongoose.connect('mongodb://publicdb.mgbeta.ru/t0sh_skb3');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
 // app.use(isAdmin);
 
 app.get('/clear', isAdmin, async (req, res) => {
