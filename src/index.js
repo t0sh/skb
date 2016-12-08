@@ -1,8 +1,9 @@
-import express from 'express';
+import express, { Router } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import fetch from 'isomorphic-fetch';
 import config from './config';
+import _ from 'lodash';
 
 const app = express();
 
@@ -23,74 +24,83 @@ async function getJsonData(dataUrl) {
 
 let petsData = {};  // ))
 
-const rootReq = (req, res, next) => {
-  res.json(petsData);
-};
-
 const logParams = (req, res, next) => {
   console.log(req.params);
   next();
 };
 
+const rootReq = (req, res, next) => {
+  res.json(petsData);
+};
+
 const reqUsers = (req, res, next) => {
-  req.users = petsData.users;
+  const users = petsData.users;
+  if (!users) next('!users');
+  req.users = users;
   next();
 };
 
 const reqUserById = (req, res, next) => {
   const id = +req.params.id;
-  if (!id) next('!req.params.id');
-  req.user = req.users.filter(user => (user.id === id));
-  if (!req.user) next('!req.user')
+  if (!id) next('!id');
+  const user = _.find(req.users, usr => (usr.id === id));
+  if (!user) next('!user')
+  req.user = user;
   next();
+  // (req.user = req.users.filter(usr => (usr.id === id))) ? next() : next('!user');
 };
 
 const reqUserByName = (req, res, next) => {
   const username = req.params.username;
-  if (!req.params.username) next('!req.params.username');
-  req.user = req.users.filter(obj => (obj.username === username));
-  if (!req.user) next('!req.user');
+  if (!username) next('!username');
+  const user = _.find(req.users, obj => (obj.username === username));
+  if (!user) next('!user');
+  req.user = user;
   next();
 };
 
 const reqPets = (req, res, next) => {
-  req.pets = petsData.pets;
-  if (!req.pets) next('!req.pets');
+  const pets = petsData.pets;
+  if (!pets) next('!pets');
+  req.pets = pets;
   next();
 };
 
 const reqPetById = (req, res, next) => {
   const id = +req.params.id;
-  req.pet = req.pet.filter(obj => (obj.id === id));
-  if (!req.pet) next('!req.pet');
+  if (!id) next('!req.params.id');
+  const pets = req.pets;
+  const pet = _.find(pets, obj => (obj.id === id));
+  if (!pet) next('!req.pet');
+  req.pet = pet;
   next();
 };
 
-const resUserPets = (req, res, next) => {
+const resPetsByUser = (req, res, next) => {
   const user = req.user;
   const pets = req.pets;
-  const userPets = pets.filter(pet => (pet.userId === user.id));
-  if (!userPets) next('!userPets');
-  res.json(userPets);
+  const petsByUser = pets.filter(pet => (pet.userId === user.id));
+  if (!petsByUser) next('!petsByUser');
+  res.json(petsByUser);
 };
 
-const reqPetsType = (req, res, next) => {
+const resPetsByType = (req, res, next) => {
   const pets = req.pets;
   const typePet = req.query.type || req.query.havePet;
   if (!typePet) next('!typePet');
-  const petsType = pets.filter(pet => (pet.type === typePet));
-  if (!petsType) next('!petsType');
-  req.petsType = petsType;
+  const petsByType = pets.filter(pet => (pet.type === typePet));
+  if (!petsByType) next('!petsByType');
+  req.petsByType = petsByType;
   next();
 }
 
-const resUsersHasPet = (req, res, next) => {
+const resUsersHasPetType = (req, res, next) => {
   const users = req.users;
   const pets = req.pets;
-  const petsType = req.petsType;
-  const usersHasPet = petsType.map(pet => users.filter(user => (user.id === pet.userId)));
-  if (!usersHasPet) next('!usersHasPet');
-  res.json(usersHasPet);
+  const petsByType = req.petsByType;
+  const usersHasPetType = petsByType.map(pet => users.filter(user => (user.id === pet.userId)));
+  if (!usersHasPetType) next('!usersHasPet');
+  res.json(usersHasPetType);
 }
 
 const resPetsAgeMoreThen = (req, res, next) => {
@@ -114,52 +124,76 @@ const catchErrors = (err, req, res, next) => {
 }
 
 // const entityRouter = express.Router();
-const rootRouter = express.Router();
-const idRouter = express.Router({ mergeParams: true });
+const rootRouter = Router();
+const usersRouter = Router();
+const userIdRouter = Router({ mergeParams: true });
+const petIdRouter = Router({ mergeParams: true });
+const userNameRouter = Router({ mergeParams: true });
+const petsRouter = Router();
+const petsByUserRouter = Router({ mergeParams: true });
+const usersHasPetTypeRouter = Router({ mergeParams: true });
 
-const usersRouter = express.Router();
+rootRouter.use(catchErrors);
 
-const petsByIdUserRouter = express.Router();
-const petsRouter = express.Router();
+rootRouter.route('/')
+  .get((req, res) => res.json(petsData));
 
-rootRouter.use(rootReq, catchErrors);
+rootRouter.use('/users', usersRouter, logParams);
 
-usersRouter.route('/'
-  .get((req, res) => {
-    res.json(req.users);
-  });
+usersRouter.use(reqUsers);
 
-usersRouter.use(reqUsers, catchErrors);
+usersRouter.route('/')
+  .get((req, res) => res.json(req.users));
 
-usersRouter.route('/users')
-  .get((req, res) => {
-    res.json(req.users);
-  });
+usersRouter.use('/:id(\\d+)', userIdRouter);
 
-usersRouter.use('/users/:id(\\d)', idRouter); // передаем параметр вниз в idRouter
+userIdRouter.use(reqUserById);
 
-idRouter.use(reqUserById);
+userIdRouter.route('/')
+  .get((req, res) => res.json(req.user));
 
-idRouter.route('/')
-  .get((req, res) => {
-    res.json(req.user);
-  });
+userIdRouter.use('/pets', petsByUserRouter);
 
-idRouter.use('/pets', petsByIdUserRouter);
+petsByUserRouter.use(reqPets);
 
-petsByIdUserRouter.use(resUserPets);
+petsByUserRouter.use('/', resPetsByUser);
 
-petsByIdUserRouter.route('/')
+usersRouter.use('/:username(\\w+)', userNameRouter);
+
+userNameRouter.use(reqUserByName);
+
+userNameRouter.route('/')
+  .get((req, res) => res.json(req.user));
+
+userNameRouter.use('/pets', petsByUserRouter);
+
+usersRouter.use('/?havePet', usersHasPetTypeRouter);
+
+usersHasPetTypeRouter.use(resUsersHasPetType);
+
+usersHasPetTypeRouter.route('/')
+  .get((req, res) => res.json());
+
+rootRouter.use('/pets', petsRouter);
+
+petsRouter.use(reqPets);
+
+petsRouter.route('/')
+  .get((req, res) => res.json(req.pets));
+
+petsRouter.use('/:id(\\d+)', petIdRouter);
+
+petIdRouter.use(reqPetById);
+
+petIdRouter.route('/')
+  .get((req, res) => res.json(req.pet));
+
+petsByUserRouter.use(resPetsByUser);
+
+petsByUserRouter.route('/')
   .get((req, res) => {
     res.json();
   });
-//
-// petsRouter.route('/pets')
-//   .get((req, res) => {
-//     res.json(petsData.pets);
-//   });
-//
-// petsRouter.use('/:pets', idRouter);
 
 // idRouter.route('/:id (\\d)')
 //   .get((req, res) => {
@@ -168,29 +202,9 @@ petsByIdUserRouter.route('/')
 //     res.json((petsData[entity]).filter(obj => (obj.id === id)));
 //   });
 
-// idRouter.route('/:username(\\w+)')
-//   .get((req, res) => {
-//     const username = req.params.username;
-//     res.json((petsData.users).filter(obj => (obj.username === username)));
-//   });
-//
-// const userPetsRouter = express.Router();
-//
-// userPetsRouter.route('/:param(id|username)')
-//   .get((req, res) => {
-//     const username = req.params.username;
-//     res.json((petsData.users).filter(obj => (obj.username === username)));
-//   });
-//
-// idRouter.use('/:pets', idRouter);
+// app.use(logParams);
 
-const logParamsRouter = express.Router();
-
-
-
-app.use(logParams);
-
-app.use('/task3B', rootReq, usersRouter, petsRouter); // entityRouter,
+app.use('/task3B', rootRouter);
 
 app.listen(config.port, async () => {
   console.log(`Your app listening on port ${config.port}!`);
