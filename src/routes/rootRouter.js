@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import _ from 'lodash';
+import usersRouter from './users_router';
+import petsRouter from './pets_router';
 
 let petsData = {};
 
@@ -55,7 +57,7 @@ function reqUsers(req, res, next) {
 }
 
 function reqUserById(req, res, next) {
-  const id = +req.params.id;
+  const id = parseInt(req.params.id, 10);
   const users = req.users;
   if (!id) next('!id');
   const user = _.find(users, usr => (usr.id === id));
@@ -259,7 +261,6 @@ petIdRouter.get('/', (req, res) => res.json(req.pet));
 //     const id = +req.params.id;
 //     res.json((petsData[entity]).filter(obj => (obj.id === id)));
 //   });
-
 
 const petsPopulateRouter = Router();
 petsRouter.use('/populate', petsPopulateRouter);

@@ -1,51 +1,65 @@
-import _ from 'lodash';
-import Pets from './pets';
 
-class Users {
-  constructor(petsData) {
-    return petsData.users;
-  }
+export function reqUsers(req, res, next) {
+  if (!users) next('!users');
+  req.users = users;
+  next();
 }
 
-const getUserById = (id) => {
-  if (!id) throw new Error('!id');
-  const user = _.find(this, usr => (usr.id === id));
-  if (!user) throw new Error('!user');
-  return user;
-};
-
-const getUsersHavePetType = (petsType) => {
-  const pets = Pets.getPetsByType(petsType);
-  let usersHavePetType = pets.map(pet =>
-    _.find(this, user => (user.id === pet.userId)));
-  // if (!usersHavePetType) throw new Error('!usersHavePetType');
-  usersHavePetType = _(usersHavePetType).sortBy(['id']).sortedUniq();
-  return usersHavePetType;
+function reqUserById(req, res, next) {
+  const id = parseInt(req.params.id, 10);
+  if (!id) next('!id');
+  const user = _.find(users, usr => (usr.id === id));
+  if (!user) next('!user');
+  req.user = user;
+  next();
 }
 
-const getUserByName = (username) => {
-  // if (!username) next('!username');
-  const user = _.find(this, obj => (obj.username === username));
-  // if (!user) next('!user');
-  return user;
-};
+function resUsersHasPetType(req, res, next) {
+  const pets = req.pets;
+  let usersHasPetType = pets.map(pet =>
+    _.find(users, user => (user.id === pet.userId)));
+  if (!usersHasPetType) next('!usersHasPet');
+  usersHasPetType = _(usersHasPetType).sortBy(['id']).sortedUniq();
+  res.json(usersHasPetType);
+}
 
-const populateUsers = (pets) => {
-  const usersPop = this.reduce((usersP, user) => {
-    let newUser = _.clone(user);
-    newUser.pets = pets.filter(pet => (user.id === pet.userId));
-    if (newUser.pets.length > 0)
-      usersP.push(newUser);
-    return usersP;
+function reqUserByName(req, res, next) {
+  const username = req.params.username;
+  if (!username) next('!username');
+  const user = _.find(req.users, obj => (obj.username === username));
+  if (!user) next('!user');
+  req.user = user;
+  next();
+}
+
+function populateUsers(req, res, next) {
+  // const allPets = req.pets;
+  const allPets = petsData.pets; // чит! надо передовать по цепочке req
+  const populatedUsers = users.reduce((resultUsers, currentUser) => {
+    const pets = allPets.filter(pet => (currentUser.id === pet.userId));
+    if (!pets.isEmpty) {
+      resultUsers.push({ ...currentUser, pets });
+    }
+    return resultUsers;
   }, []);
-  // if (!usersPop) next('!usersPop');
-  return usersPop;
-};
+  if (!populatedUsers) next('!usersPop');
+  req.populatedUsers = populatedUsers;
+  next();
+}
 
-const populateUser = (pets, userId) => {
-  let user = _.clone(getUserById(userId));
-  user.pets = pets.filter(pet => (user.id === pet.userId));
-  // if (user.pets.length === 0)
-  //   next('user does not have pet');
-  return user;
-};
+function populateUsersHavePetType(req, res, next) {
+  const populatedUsers = req.populatedUsers;
+  const petType = req.query.havePet;
+  const populatedUsersHavePetType =
+    populatedUsers.filter(user => (user.pets.some(pet => (pet.type === petType))));
+  if (!populatedUsersHavePetType) next('!usersPop');
+  res.json(populatedUsersHavePetType);
+}
+
+function populateUser(req, res, next) {
+  const allPets = req.pets;
+  const user = req.user;
+  const pets = allPets.filter(pet => (user.id === pet.userId));
+  if (pets.isEmpty) next('user does not have pet');
+  res.json({ ...user, pets });
+}
