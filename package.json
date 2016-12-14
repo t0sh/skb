@@ -41,7 +41,7 @@
   "devDependencies": {
     "babel-cli": "^6.16.0",
     "babel-core": "^6.17.0",
-    "babel-eslint": "^7.0.0",
+    "babel-eslint": "^7.1.1",
     "babel-plugin-transform-runtime": "^6.15.0",
     "babel-preset-latest": "^6.16.0",
     "babel-preset-stage-0": "^6.16.0",
@@ -54,9 +54,9 @@
     "eslint-plugin-import": "^1.16.0",
     "istanbul": "^1.1.0-alpha.1",
     "mocha": "^3.1.2",
+    "nodemon": "^1.11.0",
     "rollup": "^0.36.3",
     "rollup-plugin-babel": "^2.6.1",
-    "nodemon": "^1.11.0",
     "sinon": "^2.0.0-pre.3"
   },
   "scripts": {
