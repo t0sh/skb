@@ -1,65 +1,79 @@
+import Users from '../models/users';
+
+let users;
 
 export function reqUsers(req, res, next) {
-  if (!users) next('!users');
-  req.users = users;
-  next();
+  try {
+    req.users = new Users(users);
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
-function reqUserById(req, res, next) {
+export function reqUserById(req, res, next) {
   const id = parseInt(req.params.id, 10);
   if (!id) next('!id');
-  const user = _.find(users, usr => (usr.id === id));
-  if (!user) next('!user');
-  req.user = user;
-  next();
+  try {
+    req.user = req.users.getOneById(id);
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
-function resUsersHasPetType(req, res, next) {
-  const pets = req.pets;
-  let usersHasPetType = pets.map(pet =>
-    _.find(users, user => (user.id === pet.userId)));
-  if (!usersHasPetType) next('!usersHasPet');
-  usersHasPetType = _(usersHasPetType).sortBy(['id']).sortedUniq();
-  res.json(usersHasPetType);
+export function reqUsersHavePetType(req, res, next) {
+  const petType = req.query.havePet;
+  if (!petType) next('!petType');
+  try {
+    req.usersHavePetType = req.users.filterHavePetType(req.petsByType);
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
-function reqUserByName(req, res, next) {
+export function reqUserByName(req, res, next) {
   const username = req.params.username;
   if (!username) next('!username');
-  const user = _.find(req.users, obj => (obj.username === username));
-  if (!user) next('!user');
-  req.user = user;
-  next();
+  try {
+    req.user = users.getOneByName(username);
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
-function populateUsers(req, res, next) {
-  // const allPets = req.pets;
-  const allPets = petsData.pets; // чит! надо передовать по цепочке req
-  const populatedUsers = users.reduce((resultUsers, currentUser) => {
-    const pets = allPets.filter(pet => (currentUser.id === pet.userId));
-    if (!pets.isEmpty) {
-      resultUsers.push({ ...currentUser, pets });
-    }
-    return resultUsers;
-  }, []);
-  if (!populatedUsers) next('!usersPop');
-  req.populatedUsers = populatedUsers;
-  next();
+export function populateUsers(req, res, next) {
+  try {
+    const populatedUsers = req.users.populate(req.pets);
+    res.json(populatedUsers); // не мидлвара
+  } catch (err) {
+    next(err);
+  }
 }
 
-function populateUsersHavePetType(req, res, next) {
-  const populatedUsers = req.populatedUsers;
-  const petType = req.query.havePet;
-  const populatedUsersHavePetType =
-    populatedUsers.filter(user => (user.pets.some(pet => (pet.type === petType))));
-  if (!populatedUsersHavePetType) next('!usersPop');
-  res.json(populatedUsersHavePetType);
+export function populateUsersHavePetType(req, res, next) {
+  try {
+    const populatedUsersHavePetType = req.users.populateHavePetType(
+      req.pets,
+      req.usersHavePetType
+    );
+    res.json(populatedUsersHavePetType); // не мидлвара
+  } catch (err) {
+    next(err);
+  }
 }
 
-function populateUser(req, res, next) {
-  const allPets = req.pets;
-  const user = req.user;
-  const pets = allPets.filter(pet => (user.id === pet.userId));
-  if (pets.isEmpty) next('user does not have pet');
-  res.json({ ...user, pets });
+export function populateUser(req, res, next) {
+  try {
+    const populatedUser = req.users.populateOne(req.pets, req.user);
+    res.json(populatedUser);
+  } catch (err) {
+    next(err);
+  }
 }
+
+export default (usersData) => {
+  users = usersData;
+};

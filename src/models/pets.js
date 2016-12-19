@@ -6,23 +6,20 @@ export default class Pets {
   }
 
   filterByType(typePet) {
-    if (!typePet) throw new Error('!typePet'); // нужно ли тут генерить ошибку что нет оператора?
     const petsByType = this.filter(pet => (pet.type === typePet));
-    if (!petsByType) throw new Error('!petsByType'); // нужно ли тут генерить ошибку что нет животных с таким типом или отдавать андеф?
+    if (!petsByType) throw new Error('!petsByType');
     return petsByType;
   }
 
   filterAgeMoreThen(age_gt) {
-    if (!age_gt) throw new Error('!age_gt');
     const petsAgeMoreThen = this.filter(pet => (pet.age > age_gt));
-    if (!petsAgeMoreThen) throw new Error('!petsAgeMoreThen');
+    if (!petsAgeMoreThen) throw new Error('!petsAgeMoreThen ', age_gt);
     return petsAgeMoreThen;
   }
 
   filterAgeLessThen(age_lt) {
-		if (!age_lt) throw new Error('!age_lt');
     const petsAgeLessThen = this.filter(pet => (pet.age < age_lt));
-		if (!petsAgeLessThen) throw new Error('!petsAgeLessThen');
+		if (!petsAgeLessThen) throw new Error('!petsAgeLessThen ', age_lt);
 		return petsAgeMoreThen;
 	}
 
@@ -43,9 +40,7 @@ export default class Pets {
 		return _.find(this, obj => (obj.id === id))
 	}
 
-	populateOne(users, petId) {
-	  const pet = getOneById(petId);
-		if (!pet) throw new Error('!pet');
+	populateOne(users, pet) {
 		const user = _.find(users, currentUser => (currentUser.id === pet.userId));
 	  if (!user) throw new Error('!user');
 	  return { ...pet, user };
