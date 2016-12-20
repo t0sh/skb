@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import _ from 'lodash';
-import usersRouter from './users_router';
-import petsRouter from './pets_router';
+// import usersRouter from './users_router';
+// import petsRouter from './pets_router';
 
 let petsData = {};
 

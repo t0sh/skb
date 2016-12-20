@@ -25,15 +25,20 @@ async function getJsonData(dataUrl) {
   }
 }
 
-const catchErrors = (err, req, res, next) => {
+function reqParamsLog(req, res, next) {
+  console.log(req.params);
+}
+
+function catchErrors(err, req, res, next) {
   res.status(404).send('Not Found');
-};
+}
 
 (async function init() {
   try {
     console.log('Geting JSON...');
     const petsData = await getJsonData(config.data.url);
-    app.use('/task3B', rootRouter(petsData), catchErrors);
+    // app.use('/task3B', rootRouter(petsData), catchErrors);
+    app.use('/task3B', reqParamsLog);
     console.log('Starting WEB server...');
     await app.listen(config.port);
     console.log(`Server was started on ${config.port} port`);

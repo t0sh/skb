@@ -8,51 +8,55 @@ export default class Users {
     return users;
   }
 
-	getOneById(id) {
+  getOneById(id) {
     const user = _.find(this, usr => (usr.id === id));
-	  if (!user) throw new Error('!user');
-	  return user;
-	}
+    if (!user) throw new Error('!user');
+    return user;
+  }
 
-	filterHavePetType(petsByType) {
-		const usersHavePetType = petsByType.map(pet =>
-			_.find(this, user => (user.id === pet.userId)));
-	  if (!usersHavePetType) throw new Error('!usersHavePetType');
-		return _(usersHavePetType).sortBy(['id']).sortedUniq();
-	}
+  getOneByName(username) {
+    const user = _.find(this, obj => (obj.username === username));
+    if (!user) throw new Error('!user');
+    return user;
+  }
 
-	getOneByName(username) {
-	  if (!username) throw new Error('!username');
-	  const user = _.find(this, obj => (obj.username === username));
-	  if (!user) throw new Error('!user');
-	  return user;
-	}
+  static getPetsByUser(user, pets) {
+    const petsByUser = pets.filter(pet => pet.userId === user.id);
+    if (!petsByUser) throw new Error('!petsByUser');
+    return petsByUser;
+  }
 
-	static _populate(pets, users) {
-		const populatedUsers = users.reduce((resultUsers, currentUser) => {
-			const userPets = pets.filter(pet => (currentUser.id === pet.userId));
-			if (!userPets.isEmpty) {
-	      resultUsers.push({ ...currentUser, pets: userPets });
-	    }
-	    return resultUsers;
-	  }, []);
-	  if (!populatedUsers) throw new Error('!populatedUsers');
-	  return populatedUsers;
-	}
+  filterHavePetType(petsByType) {
+    const usersHavePetType = petsByType.map(pet =>
+      _.find(this, user => (user.id === pet.userId)));
+    if (!usersHavePetType) throw new Error('!usersHavePetType');
+    return _(usersHavePetType).sortBy(['id']).sortedUniq();
+  }
 
-	populate(pets) {
-		const populatedUsers = this._populate(pets, this);
-	  return populatedUsers;
-	}
+  static _populate(pets, users) {
+    const populatedUsers = users.reduce((resultUsers, currentUser) => {
+      const userPets = pets.filter(pet => (currentUser.id === pet.userId));
+      if (!userPets.isEmpty) {
+        resultUsers.push({ ...currentUser, pets: userPets });
+      }
+      return resultUsers;
+    }, []);
+    if (!populatedUsers) throw new Error('!populatedUsers');
+    return populatedUsers;
+  }
+  populate(pets) {
+    const populatedUsers = this._populate(pets, this);
+    return populatedUsers;
+  }
 
-	populateOne(pets, user) {
-	  const userPets = pets.filter(pet => (user.id === pet.userId));
-	  if (pets.isEmpty) throw new Error('user does not have pet');
-	  return { ...user, pets: userPets };
-	}
+  static populateOne(pets, user) {
+    const userPets = pets.filter(pet => (user.id === pet.userId));
+    if (pets.isEmpty) throw new Error('user does not have pet');
+    return { ...user, pets: userPets };
+  }
 
-	populateHavePetType(pets, usersHavePetType) {
-		const populatedUsersHavePetType = this._populate(pets, usersHavePetType);
-		return populatedUsersHavePetType;
-	}
+  populateHavePetType(pets, usersHavePetType) {
+    const populatedUsersHavePetType = this._populate(pets, usersHavePetType);
+    return populatedUsersHavePetType;
+  }
 }
