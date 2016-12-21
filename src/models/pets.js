@@ -1,48 +1,45 @@
-import _ from 'lodash';
 
-export default class Pets {
-  constructor(petsData) {
-    return petsData.pets;
-  }
+export function getOneById(pets, id) {
+  const pet = pets.find(obj => (obj.id === id));
+  if (!pet) throw new Error(`!pet id= ${id}`);
+  return pet;
+}
 
-  filterByType(typePet) {
-    const petsByType = this.filter(pet => (pet.type === typePet));
-    if (!petsByType) throw new Error('!petsByType');
-    return petsByType;
-  }
+export function filterByType(pets, typePet) {
+  const petsByType = pets.filter(pet => (pet.type === typePet));
+  if (!petsByType) throw new Error(`!pets by type ${typePet}`);
+  return petsByType;
+}
 
-  filterAgeMoreThen(age_gt) {
-    const petsAgeMoreThen = this.filter(pet => (pet.age > age_gt));
-    if (!petsAgeMoreThen) throw new Error('!petsAgeMoreThen ', age_gt);
-    return petsAgeMoreThen;
-  }
+export function filterAgeMoreThen(pets, age_gt) {
+  const petsAgeMoreThen = pets.filter(pet => (pet.age > age_gt));
+  if (!petsAgeMoreThen) throw new Error(`!pets age more then ${age_gt}`);
+  return petsAgeMoreThen;
+}
 
-  filterAgeLessThen(age_lt) {
-    const petsAgeLessThen = this.filter(pet => (pet.age < age_lt));
-		if (!petsAgeLessThen) throw new Error('!petsAgeLessThen ', age_lt);
-		return petsAgeMoreThen;
-	}
+export function filterAgeLessThen(pets, age_lt) {
+  const petsAgeLessThen = pets.filter(pet => (pet.age < age_lt));
+  if (!petsAgeLessThen) throw new Error(`!pets age less then ${age_lt}`);
+  return petsAgeLessThen;
+}
 
-  filterByUser(user) {
-    return this.filter(pet => (pet.userId === user.id))
-  }
+export function filterByUser(pets, user) {
+  const petsByUser = pets.filter(pet => (pet.userId === user.id));
+  if (!petsByUser) throw new Error(`!pets by user ${user.name}`);
+  return petsByUser;
+}
 
-  populate(users) {
-    const populatedPets = this.map((pet) => {
-      const user = _.find(users, user => (user.id === pet.userId));
-      return { ...pet, user };
-    });
-		if (!populatedPets) throw new Error('!populatedPets');
-		return populatedPets;
-  }
+export function populate(pets, users) {
+  const populatedPets = pets.map((pet) => {
+    const user = users.find(usr => (usr.id === pet.userId));
+    return { ...pet, user };
+  });
+  if (!populatedPets) throw new Error('!populatedPets');
+  return populatedPets;
+}
 
-	getOneById(id) {
-		return _.find(this, obj => (obj.id === id))
-	}
-
-	populateOne(users, pet) {
-		const user = _.find(users, currentUser => (currentUser.id === pet.userId));
-	  if (!user) throw new Error('!user');
-	  return { ...pet, user };
-	}
+export function populateOne(pet, users) {
+  const user = users.find(currentUser => (currentUser.id === pet.userId));
+  if (!user) throw new Error('!user with such pet');
+  return { ...pet, user };
 }

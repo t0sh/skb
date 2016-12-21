@@ -1,12 +1,10 @@
-// TODO: В запросе users/populate?havePet=cat у юзеров приходят только коты, а должны приходить все животные, которые есть у держателей котов.
-
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import fetch from 'isomorphic-fetch';
 
 import config from './config';
-import rootRouter from './routes/rootRouter';
+import rootRouter from './routes';
 
 const app = express();
 
@@ -25,11 +23,8 @@ async function getJsonData(dataUrl) {
   }
 }
 
-function reqParamsLog(req, res, next) {
-  console.log(req.params);
-}
-
 function catchErrors(err, req, res, next) {
+  console.log(err.message);
   res.status(404).send('Not Found');
 }
 
@@ -37,8 +32,7 @@ function catchErrors(err, req, res, next) {
   try {
     console.log('Geting JSON...');
     const petsData = await getJsonData(config.data.url);
-    // app.use('/task3B', rootRouter(petsData), catchErrors);
-    app.use('/task3B', reqParamsLog);
+    app.use('/task3B', rootRouter(petsData), catchErrors);
     console.log('Starting WEB server...');
     await app.listen(config.port);
     console.log(`Server was started on ${config.port} port`);

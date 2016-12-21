@@ -1,64 +1,68 @@
 import { Router } from 'express';
-import { reqPets, reqPetsByType } from './pets_router';
+import getReqPets, { reqPetsByType } from '../middlewares/pets';
 import * as UsersMiddlewares from '../middlewares/users';
-import Users from '../models/users';
-
-const usersRouter = Router();
-usersRouter.use(UsersMiddlewares.reqUsers);
-usersRouter.route('/')
-  .get((req, res, next) => {
-    (req.query.havePet) ? next() :
-      res.json(req.users);
-  })
-  .get(reqPets, UsersMiddlewares.reqUsersHavePetType, (req, res) => {
-    res.json(req.users);
-  });
-
-const userIdRouter = Router({ mergeParams: true });
-usersRouter.use('/:id(\\-?\\d+)', userIdRouter);
-userIdRouter.use(UsersMiddlewares.reqUserById);
-userIdRouter.get('/', (req, res) => res.json(req.user));
-
-const usersPopulateRouter = Router();
-usersRouter.use('/populate', usersPopulateRouter);
-usersPopulateRouter.use(reqPets);
-usersPopulateRouter.route('/')
-  .get((req, res, next) => {
-    (req.query.havePet) ? next() :
-      res.json(req.users.populate(req.pets));
-  })
-  .get(
-    UsersMiddlewares.reqPetsByType,
-    UsersMiddlewares.reqUsersHavePetType,
-    (req, res) =>
-      res.json(req.users.populate(req.pets)),
-  );
-
-const userNameRouter = Router({ mergeParams: true });
-usersRouter.use('/:username(\\w+)', userNameRouter);
-userNameRouter.use(UsersMiddlewares.reqUserByName);
-userNameRouter.get('/', (req, res) => res.json(req.user));
-
-const userPopulateRouter = Router();
-userIdRouter.use('/populate', userPopulateRouter);
-userNameRouter.use('/populate', userPopulateRouter);
-userPopulateRouter.get('/',
-  reqPets,
-  (req, res) =>
-    res.json(req.users.populateOne(req.pets, req.user)),
-);
-
-const petsByUserRouter = Router();
-userIdRouter.use('/pets', petsByUserRouter);
-userNameRouter.use('/pets', petsByUserRouter);
-petsByUserRouter.get('/',
-  reqPets,
-  (req, res) =>
-    res.json(req.users.getPetsByUser(req.user, req.pets)),
-  );
+import * as Users from '../models/users';
 
 export default (petsData) => {
-  UsersMiddlewares.reqUsers = UsersMiddlewares.default(petsData.users);
-  // middlewares.reqPets = middlewares.default(petsData.pets);
+  const middlewares = {
+    ...UsersMiddlewares,
+    reqUsers: UsersMiddlewares.default(petsData.users),
+    reqPets: getReqPets(petsData.pets),
+    reqPetsByType,
+  };
+
+  const userPopulateRouter = Router()
+    .get('/',
+      middlewares.reqPets,
+      (req, res) =>
+        res.json(Users.populateOne(req.pets, req.user)),
+    );
+
+  const petsByUserRouter = Router()
+    .get('/',
+      middlewares.reqPets,
+      (req, res) =>
+        res.json(Users.getPetsByUser(req.user, req.pets)),
+      );
+
+  const userIdRouter = Router({ mergeParams: true })
+    .use(middlewares.reqUserById)
+    .get('/', (req, res) => res.json(req.user))
+    .use('/pets', petsByUserRouter)
+    .use('/populate', userPopulateRouter)
+  ;
+
+  const usersPopulateRouter = Router()
+    .use(
+      middlewares.reqPets,
+      middlewares.reqPetsByType,
+      middlewares.reqUsersHavePetType,
+    )
+    .get('/', (req, res) =>
+      res.json(Users.populate(req.users, req.allPets)));
+
+  const userNameRouter = Router({ mergeParams: true })
+    .use(middlewares.reqUserByName)
+    .get('/', (req, res) => res.json(req.user))
+    .use('/pets', petsByUserRouter)
+    .use('/populate', userPopulateRouter)
+  ;
+
+  const usersRouter = Router()
+    .use(middlewares.reqUsers)
+    .use('/:id(\\-?\\d+)', userIdRouter)
+    .use('/populate', usersPopulateRouter)
+    .use('/:username(\\w+)', userNameRouter)
+    .get('/',
+      (req, res, next) => {
+        (req.query.havePet) ? next() :
+        res.json(req.users);
+      },
+      middlewares.reqPets,
+      middlewares.reqPetsByType,
+      middlewares.reqUsersHavePetType,
+      (req, res) => res.json(req.users))
+  ;
+
   return usersRouter;
 };
