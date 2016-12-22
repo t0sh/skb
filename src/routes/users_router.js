@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import getReqPets, { reqPetsByType } from '../middlewares/pets';
 import * as UsersMiddlewares from '../middlewares/users';
-import * as Users from '../models/users';
+import {
+  populateOne,
+  getPetsByUser,
+  populate,
+} from '../models/users';
 
 export default (petsData) => {
   const middlewares = {
@@ -15,14 +19,14 @@ export default (petsData) => {
     .get('/',
       middlewares.reqPets,
       (req, res) =>
-        res.json(Users.populateOne(req.pets, req.user)),
+        res.json(populateOne(req.pets, req.user)),
     );
 
   const petsByUserRouter = Router()
     .get('/',
       middlewares.reqPets,
       (req, res) =>
-        res.json(Users.getPetsByUser(req.user, req.pets)),
+        res.json(getPetsByUser(req.user, req.pets)),
       );
 
   const userIdRouter = Router({ mergeParams: true })
@@ -39,7 +43,7 @@ export default (petsData) => {
       middlewares.reqUsersHavePetType,
     )
     .get('/', (req, res) =>
-      res.json(Users.populate(req.users, req.allPets)));
+      res.json(populate(req.users, req.allPets)));
 
   const userNameRouter = Router({ mergeParams: true })
     .use(middlewares.reqUserByName)
